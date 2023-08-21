@@ -5,8 +5,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"riot-data-ingest/api"
+	"riot-data-ingest/client"
 
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
 type Locales struct {
@@ -18,37 +21,20 @@ type Locales struct {
 }
 
 func main() {
-	envErr := godotenv.Load(".env")
-	if envErr != nil {
-		fmt.Printf("No such .env file")
-		os.Exit(1)
-	}
-	riot_token := os.Getenv("RIOT_TOKEN")
-	fmt.Printf("Riot Token=%s\n", riot_token)
-
-	url := "https://br.api.riotgames.com/val/content/v1/contents?locale=pt-BR&api_key=RGAPI-95faa9dd-791f-4cb3-87df-abb14d44e1ff"
-	req, err := http.NewRequest("GET", url, nil)
+	err := godotenv.Load(".env")
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		panic(err)
 	}
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
+	c := client.NewClient(api.RegionBrasil, http.DefaultClient, logrus.New())
+	r, err := c.DoRequest("GET", "/val/content/v1/contents", nil)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		panic(err)
 	}
+	defer r.Body.Close()
+	fmt.Println(r.Body)
+	//url := "https://br.api.riotgames.com/val/content/v1/contents?locale=pt-BR&api_key=RGAPI-95faa9dd-791f-4cb3-87df-abb14d44e1ff"
 
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		fmt.Printf(resp.Status)
-		return
-	}
-
-	fmt.Println("Response Body:")
-	_, err = io.Copy(os.Stdout, resp.Body)
+	_, err = io.Copy(os.Stdout, r.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
 	}
