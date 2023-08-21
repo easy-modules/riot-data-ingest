@@ -1,5 +1,9 @@
 package api
 
+//!!!Broken!!!
+//TODO: Search the correct match from every country 
+//(Only br running normally :0)
+
 // Region represents a server region
 type Region string
 
